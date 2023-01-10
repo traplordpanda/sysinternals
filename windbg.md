@@ -224,3 +224,82 @@
           [+0x72c] Spare            : 0x0 [Type: unsigned long]
           [+0x730] UserPointerAuthMask : 0x0 [Type: unsigned __int64]
           ```
+     - Microsft Code integrity
+       - ```lkd> dx -g @$cursession.Processes.Select(p => new {Name = p.Name, SignatureLevel = p.KernelObject.SignatureLevel & 0xf, DllSignatureLevel = p.KernelObject.SectionSignatureLevel & 0xf}).OrderByDescending(p => p.SignatureLevel)```
+      ![code integ](./pics/code_integ.png)
+     - Logical Processor Kernel Structures
+     - KPCR
+     - ```
+        lkd> dx (nt!_KPCR*)0xfffff8070775c180
+        (nt!_KPCR*)0xfffff8070775c180                 : 0xfffff8070775c180 [Type: _KPCR *]
+        [+0x000] NtTib            [Type: _NT_TIB]
+        [+0x000] GdtBase          : 0x1f80 [Type: _KGDTENTRY64 *]
+        [+0x008] TssBase          : 0xffffaf8f21d0a080 [Type: _KTSS64 *]
+        [+0x010] UserRsp          : 0x0 [Type: unsigned __int64]
+        [+0x018] Self             : 0xfffff8070a927a00 [Type: _KPCR *]
+        [+0x020] CurrentPrcb      : 0x1000000 [Type: _KPRCB *]
+        [+0x028] LockArray        : 0xffffae888aa22c90 [Type: _KSPIN_LOCK_QUEUE *]
+        [+0x030] Used_Self        : 0x0 [Type: void *]
+        [+0x038] IdtBase          : 0xfffff80707764c10 [Type: _KIDTENTRY64 *]
+        [+0x040] Unused           [Type: unsigned __int64 [2]]
+        [+0x050] Irql             : 0x0 [Type: unsigned char]
+        [+0x051] SecondLevelCacheAssociativity : 0x0 [Type: unsigned char]
+        [+0x052] ObsoleteNumber   : 0x0 [Type: unsigned char]
+        [+0x053] Fill0            : 0x0 [Type: unsigned char]
+        [+0x054] Unused0          [Type: unsigned long [3]]
+        [+0x060] MajorVersion     : 0x0 [Type: unsigned short]
+        [+0x062] MinorVersion     : 0x0 [Type: unsigned short]
+        [+0x064] StallScaleFactor : 0x0 [Type: unsigned long]
+        [+0x068] Unused1          [Type: void * [3]]
+        [+0x080] KernelReserved   [Type: unsigned long [15]]
+        [+0x0bc] SecondLevelCacheSize : 0x0 [Type: unsigned long]
+        [+0x0c0] HalReserved      [Type: unsigned long [16]]
+        [+0x100] Unused2          : 0x80050033 [Type: unsigned long]
+        [+0x108] KdVersionBlock   : 0x0 [Type: void *]
+        [+0x110] Unused3          : 0x1ad002 [Type: void *]
+        [+0x118] PcrAlign1        [Type: unsigned long [24]]
+        [+0x180] Prcb             [Type: _KPRCB]
+        ```
+        - Threads
+        ```
+        !running -i
+
+        System Processors:  (00000000000000ff)
+          Idle Processors:  (00000000000000fe)
+
+              Prcbs             Current         (pri) Next            (pri) Idle
+          0    fffff8070775c180  ffffaf8f21d0a080 (15)                       fffff8070a927a00  ................
+          1    ffffc50155252180  ffffc5015525d240 ( 0)                       ffffc5015525d240  ................
+          2    ffffc501552d2180  ffffaf8f258c8500 (12)                       ffffc501552dd240  ................
+          3    ffffc501553d3180  ffffc501553de240 ( 0)                       ffffc501553de240  ................
+          4    ffffc50155540180  ffffc5015554b240 ( 0)                       ffffc5015554b240  ................
+          5    ffffc50155600180  ffffc5015560b240 ( 0)                       ffffc5015560b240  ................
+          6    ffffc50155700180  ffffc5015570b240 ( 0)                       ffffc5015570b240  ................
+          7    ffffc50155800180  ffffc5015580b240 ( 0)                       ffffc5015580b240  ................
+        ```
+        ```
+        lkd> dx @$cursession.Devices.LogicalProcessors
+        @$cursession.Devices.LogicalProcessors                
+            [0x0]           
+            [0x1]           
+            [0x2]           
+            [0x3]           
+            [0x4]           
+            [0x5]           
+            [0x6]           
+            [0x7]   
+        ```
+        ```
+        lkd> dx @$cpus =  *(int*)&nt!KeNumberProcessors
+        @$cpus =  *(int*)&nt!KeNumberProcessors : 8 [Type: int]
+        lkd> dx ((nt!_KPRCB*(*)[999])&NT!KiProcessorBlock) -> Take(@$cpus)
+        ((nt!_KPRCB*(*)[999])&NT!KiProcessorBlock) -> Take(@$cpus)                
+            [0]              : 0xfffff8070775c180 [Type: _KPRCB *]
+            [1]              : 0xffffc50155252180 [Type: _KPRCB *]
+            [2]              : 0xffffc501552d2180 [Type: _KPRCB *]
+            [3]              : 0xffffc501553d3180 [Type: _KPRCB *]
+            [4]              : 0xffffc50155540180 [Type: _KPRCB *]
+            [5]              : 0xffffc50155600180 [Type: _KPRCB *]
+            [6]              : 0xffffc50155700180 [Type: _KPRCB *]
+            [7]              : 0xffffc50155800180 [Type: _KPRCB *]
+        ```

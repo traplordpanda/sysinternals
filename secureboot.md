@@ -1,0 +1,15 @@
+### UEFI
+- New BIOS
+- originally full graphics 
+  - user reaction pushed back to 1980s graphics
+- enabling of TPM
+- uses known hash db to enable bootloaders
+- third party program end by [kaspersky vuln bootloader](https://firmwaresecurity.com/2020/02/16/kaspersky-bootloader-uefi-secure-boot-vulnerability/)
+- flow uefi -> bl -> bm -> kernel -> hyper-v -> secure kernel
+  - still loading kernel could be untrusted
+  - solution is Secure Launch DRTM(Dynamic Root Trust Measurements)
+    - uses Intel TXT technology
+    - Launches MLE (Microsoft Measured Launch Environment)
+      - MLE launches Hyper-V
+      - New flow uefi -> mbr -> bl -> bm -> TCB -> hyper-v -> sk -> bl -> nl
+      - 

@@ -9,3 +9,5 @@
 - [Updated Analysis of PatchGuard on Microsoft Windows 10 RS4
 ](https://blog.tetrane.com/2019/Analysis-Windows-PatchGuard.html)
 - [Titanhide - Duncan x64dbg](https://github.com/mrexodia/TitanHide)
+- [rop chain](https://www.ired.team/offensive-security/code-injection-process-injection/binary-exploitation/rop-chaining-return-oriented-programming)
+- 

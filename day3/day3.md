@@ -367,3 +367,169 @@ lkd> dx @$pcr->TssBase->Ist
     121 ffff9b0f671e7180    89e4c454 0000045d [ 1/11/2023 11:39:36.102]  thread ffff9b0f671e7080 
     ...
     ```
+    - Windows 10 KTIMER2    
+      - Kernel APIs for high resolution 
+      - uses red/black trees instead of 256 hash buckets
+      - technically can use in user mode but not directly documented
+      - callback is no longer a DPC routine
+- Asynchronous Procedure Calls
+  - KAPC (Kernel APC)
+  -  apc example
+    ```
+    dx (nt!_KAPC*)0xffffaf8f21685308
+    (nt!_KAPC*)0xffffaf8f21685308                 : 0xffffaf8f21685308 [Type: _KAPC *]
+        [+0x000] Type             : 0x12 [Type: unsigned char]
+        [+0x001] SpareByte0       : 0x0 [Type: unsigned char]
+        [+0x002] Size             : 0x58 [Type: unsigned char]
+        [+0x003] SpareByte1       : 0x6 [Type: unsigned char]
+        [+0x004] SpareLong0       : 0x0 [Type: unsigned long]
+        [+0x008] Thread           : 0xffffaf8f21685080 [Type: _KTHREAD *]
+        [+0x010] ApcListEntry     [Type: _LIST_ENTRY]
+        [+0x020] KernelRoutine    : 0xfffff80709f99090 : ntkrnlmp!EmpCheckErrataList+0x0 [Type: void (__cdecl*)(_KAPC *,void (__cdecl**)(void *,void *,void *),void * *,void * *,void * *)]
+        [+0x028] RundownRoutine   : 0xfffff80709f99090 : ntkrnlmp!EmpCheckErrataList+0x0 [Type: void (__cdecl*)(_KAPC *)]
+        [+0x030] NormalRoutine    : 0xfffff80709e8ca70 : ntkrnlmp!KiSchedulerApc+0x0 [Type: void (__cdecl*)(void *,void *,void *)]
+        [+0x020] Reserved         [Type: void * [3]]
+        [+0x038] NormalContext    : 0xffffaf8f21685080 [Type: void *]
+        [+0x040] SystemArgument1  : 0x0 [Type: void *]
+        [+0x048] SystemArgument2  : 0x0 [Type: void *]
+        [+0x050] ApcStateIndex    : 0 [Type: char]
+        [+0x051] ApcMode          : 0 [Type: char]
+        [+0x052] Inserted         : 0x1 [Type: unsigned char]
+    ```
+Syscalls
+====
+- runs through ntdll
+- microsoft changes them sometimes
+- int 2eh in windows
+- check if hyper-v uses syscall or int 2eh
+-   ```
+    dx @$myUserdat->SystemCall
+    @$myUserdat->SystemCall : 0x0 [Type: unsigned long]
+    ```
+- win32k uses it's own syscall 
+    ```
+    lkd> dps nt!KeServiceDescriptorTableShadow
+    fffff807`0a8fca40  fffff807`09cc7a40 nt!KiServiceTable
+    fffff807`0a8fca48  00000000`00000000
+    fffff807`0a8fca50  00000000`000001d7
+    fffff807`0a8fca58  fffff807`09cc81a0 nt!KiArgumentTable
+    fffff807`0a8fca60  fffff1dd`068f8000 win32k!W32pServiceTable
+    fffff807`0a8fca68  00000000`00000000
+    fffff807`0a8fca70  00000000`00000524
+    fffff807`0a8fca78  fffff1dd`068f99bc win32k!W32pArgumentTable
+    ```
+- KiServiceTable is an array of syscalls. first 7 bits are offset from KiServiceTable.
+- last bit is number of arguments
+
+```
+dd nt!KiServiceTable
+fffff802`2e0d3e40  01a78e04 02844a00 07234d02 09ccf500
+fffff802`2e0d3e50  05feb100 03613700 06bf4005 06054d06
+fffff802`2e0d3e60  06c18505 064cb501 0683e700 06548800
+fffff802`2e0d3e70  066c6c00 063aeb00 0683fa00 05fece00
+fffff802`2e0d3e80  0753f401 060ac201 06304f00 069fb302
+fffff802`2e0d3e90  07115100 07084900 05fed301 062cad02
+fffff802`2e0d3ea0  063e4402 06594001 07074d01 0723ed05
+fffff802`2e0d3eb0  06b70100 06a20f03 063d9f00 09025a00
+```
+```
+dx @$table = (int (*)[0x1e8])&nt!KiServiceTable
+dx @$table->Select(o => (void(*)())(((__int64)&nt!KiServiceTable) + (o >> 4)))
+lkd> dx -g @$table->Select(o => new {Syscall = (void(*)())(((__int64)&nt!KiServiceTable) + (o >> 4)), Arguments = (o & 0xf) + 4 })
+=======================================================================================
+=          = (+) Syscall                                                  = Arguments =
+=======================================================================================
+= [0]      - 0xfffff80709f3b740 : ntkrnlmp!NtAccessCheck+0x0              - 8         =
+= [1]      - 0xfffff80709f44110 : ntkrnlmp!NtWorkerFactoryWorkerReady+0x0 - 4         =
+= [2]      - 0xfffff8070a311f80 : ntkrnlmp!NtAcceptConnectPort+0x0        - 6         =
+= [3]      - 0xfffff8070a4d7030 : ntkrnlmp!NtMapUserPhysicalPagesScatt... - 4         =
+= [4]      - 0xfffff8070a2083b0 : ntkrnlmp!NtWaitForSingleObject+0x0      - 4         =
+= [5]      - 0xfffff80709ffd970 : ntkrnlmp!NtCallbackReturn+0x0           - 4         =
+= [6]      - 0xfffff8070a1f0ff0 : ntkrnlmp!NtReadFile+0x0                 - 9         =
+= [7]      - 0xfffff8070a2186f0 : ntkrnlmp!NtDeviceIoControlFile+0x0      - 10        =
+= [8]      - 0xfffff8070a1f03c0 : ntkrnlmp!NtWriteFile+0x0                - 9         =
+= [9]      - 0xfffff8070a2e4320 : ntkrnlmp!NtRemoveIoCompletion+0x0       - 5         =
+= [10]     - 0xfffff8070a2e3940 : ntkrnlmp!NtReleaseSemaphore+0x0         - 4         =
+= [11]     - 0xfffff8070a20fee0 : ntkrnlmp!NtReplyWaitReceivePort+0x0     - 4         =
+= [12]     - 0xfffff8070a2bf050 : ntkrnlmp!NtReplyPort+0x0                - 4         =
+= [13]     - 0xfffff8070a2175d0 : ntkrnlmp!NtSetInformationThread+0x0     - 4         =
+= [14]     - 0xfffff8070a216cc0 : ntkrnlmp!NtSetEvent+0x0                 - 4         =
+= [15]     - 0xfffff8070a2080e0 : ntkrnlmp!NtClose+0x0                    - 4         =
+= [16]     - 0xfffff8070a1e1310 : ntkrnlmp!NtQueryObject+0x0              - 5         =
+= [17]     - 0xfffff8070a21bca0 : ntkrnlmp!NtQueryInformationFile+0x0     - 5         =
+= [18]     - 0xfffff8070a2f1e60 : ntkrnlmp!NtOpenKey+0x0                  - 4         =
+= [19]     - 0xfffff8070a1f9620 : ntkrnlmp!NtEnumerateValueKey+0x0        - 6         =
+= [20]     - 0xfffff8070a246e00 : ntkrnlmp!NtFindAtom+0x0                 - 4         =
+= [21]     - 0xfffff8070a2fe0d0 : ntkrnlmp!NtQueryDefaultLocale+0x0       - 4         =
+= [22]     - 0xfffff8070a22e590 : ntkrnlmp!NtQueryKey+0x0                 - 5         =
+= [23]     - 0xfffff8070a22ec30 : ntkrnlmp!NtQueryValueKey+0x0            - 6         =
+= [24]     - 0xfffff8070a24c960 : ntkrnlmp!NtAllocateVirtualMemory+0x0    - 6         =
+= [25]     - 0xfffff8070a1e3830 : ntkrnlmp!NtQueryInformationProcess+0x0  - 5         =
+= [26]     - 0xfffff8070a2f27f0 : ntkrnlmp!NtWaitForMultipleObjects32+0x0 - 5         =
+= [27]     - 0xfffff8070a2f9e80 : ntkrnlmp!NtWriteFileGather+0x0          - 9         =
+= [28]     - 0xfffff8070a24da60 : ntkrnlmp!NtSetInformationProcess+0x0    - 4         =
+= [29]     - 0xfffff8070a29dc10 : ntkrnlmp!NtCreateKey+0x0                - 7         =
+= [30]     - 0xfffff8070a28d5f0 : ntkrnlmp!NtFreeVirtualMemory+0x0        - 4         =
+= [31]     - 0xfffff8070a4c2070 : ntkrnlmp!NtImpersonateClientOfPort+0x0  - 4         =
+= [32]     - 0xfffff8070a216bb0 : ntkrnlmp!NtReleaseMutant+0x0            - 4         =
+```
+- misc
+  - with arbitrary write could find kthread and edit previous mode to kernel mode 
+
+Core & Executive Machanisms
+====
+Object Manager
+  - OBJECT_TYPE STRUCT
+    ```
+    lkd> dt nt!_OBJECT_TYPE
+    +0x000 TypeList         : _LIST_ENTRY
+    +0x010 Name             : _UNICODE_STRING
+    +0x020 DefaultObject    : Ptr64 Void
+    +0x028 Index            : UChar
+    +0x02c TotalNumberOfObjects : Uint4B
+    +0x030 TotalNumberOfHandles : Uint4B
+    +0x034 HighWaterNumberOfObjects : Uint4B
+    +0x038 HighWaterNumberOfHandles : Uint4B
+    +0x040 TypeInfo         : _OBJECT_TYPE_INITIALIZER
+    +0x0b8 TypeLock         : _EX_PUSH_LOCK
+    +0x0c0 Key              : Uint4B
+    +0x0c8 CallbackList     : _LIST_ENTRY
+    ```
+  - OBJECT_TYPE_INITIALIZER STRUCT
+    ```
+    lkd> dt nt!_OBJECT_TYPE_INITIALIZER
+    +0x000 Length           : Uint2B
+    +0x002 ObjectTypeFlags  : Uint2B
+    +0x002 CaseInsensitive  : Pos 0, 1 Bit
+    +0x002 UnnamedObjectsOnly : Pos 1, 1 Bit
+    +0x002 UseDefaultObject : Pos 2, 1 Bit
+    +0x002 SecurityRequired : Pos 3, 1 Bit
+    +0x002 MaintainHandleCount : Pos 4, 1 Bit
+    +0x002 MaintainTypeList : Pos 5, 1 Bit
+    +0x002 SupportsObjectCallbacks : Pos 6, 1 Bit
+    +0x002 CacheAligned     : Pos 7, 1 Bit
+    +0x003 UseExtendedParameters : Pos 0, 1 Bit
+    +0x003 Reserved         : Pos 1, 7 Bits
+    +0x004 ObjectTypeCode   : Uint4B
+    +0x008 InvalidAttributes : Uint4B
+    +0x00c GenericMapping   : _GENERIC_MAPPING
+    +0x01c ValidAccessMask  : Uint4B
+    +0x020 RetainAccess     : Uint4B
+    +0x024 PoolType         : _POOL_TYPE
+    +0x028 DefaultPagedPoolCharge : Uint4B
+    +0x02c DefaultNonPagedPoolCharge : Uint4B
+    +0x030 DumpProcedure    : Ptr64     void 
+    +0x038 OpenProcedure    : Ptr64     long 
+    +0x040 CloseProcedure   : Ptr64     void 
+    +0x048 DeleteProcedure  : Ptr64     void 
+    +0x050 ParseProcedure   : Ptr64     long 
+    +0x050 ParseProcedureEx : Ptr64     long 
+    +0x058 SecurityProcedure : Ptr64     long 
+    +0x060 QueryNameProcedure : Ptr64     long 
+    +0x068 OkayToCloseProcedure : Ptr64     unsigned char 
+    +0x070 WaitObjectFlagMask : Uint4B
+    +0x074 WaitObjectFlagOffset : Uint2B
+    +0x076 WaitObjectPointerOffset : Uint2B
+    ```
+
+    `dx @$objTypes = (nt!_OBJECT_TYPE*(*)[67])&nt!ObpObjectTypes`

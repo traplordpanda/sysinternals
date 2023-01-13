@@ -130,3 +130,29 @@ ffffaf8f18070e00 ALPC Port                 PowerMonitorPort
 ffffaf8f1df36af0 ALPC Port                 SeLsaCommandPort
 ffffaf8f1d44adf0 ALPC Port                 SmApiPort
 ```
+alpc graph show what processes are using what alpc port
+```
+lkd> !alpc /graph
+ffffaf8f1f816690 0000000000000004 ffffaf8f18070e00 0000000000000004 PowerMonitorPort
+ffffaf8f1dd38df0 000000000000026c ffffaf8f1d44adf0 00000000000001dc SmApiPort
+ffffaf8f1dd82df0 00000000000001dc ffffaf8f1dd74df0 000000000000026c SbApiPort
+ffffaf8f1ddabdf0 000000000000035c ffffaf8f1db1a310 000000000000026c ApiPort
+ffffaf8f1df21b80 0000000000000004 ffffaf8f1df14c40 000000000000035c WMsgKRpc0B1470
+ffffaf8f1df5ab80 00000000000003b0 ffffaf8f1db1a310 000000000000026c ApiPort
+ffffaf8f1de8d310 00000000000003d0 ffffaf8f1db1a310 000000000000026c ApiPort
+ffffaf8f1df36d50 00000000000003d0 ffffaf8f1cb65720 0000000000000004 SeRmCommandPort
+ffffaf8f1de99df0 0000000000000004 ffffaf8f1df36af0 00000000000003d0 SeLsaCommandPort
+ffffaf8f1df7dd40 0000000000000370 ffffaf8f1d44adf0 00000000000001dc SmApiPort
+ffffaf8f1dfa8d20 00000000000001dc ffffaf8f1df7dae0 0000000000000370 SbApiPort
+ffffaf8f1df8bd30 0000000000000228 ffffaf8f1dd96df0 0000000000000370 ApiPort
+ffffaf8f1dfb1b80 0000000000000004 ffffaf8f1dfadd40 0000000000000228 WMsgKRpc0C3231
+ffffaf8f1dfb7700 0000000000000004 ffffaf8f1dfc19a0 00000000000003d0 lsasspirpc
+ffffaf8f1dfe6570 00000000000003d0 ffffaf8f1dfc19a0 00000000000003d0 lsasspirpc
+ffffaf8f1dfe8ce0 00000000000003b0 ffffaf8f1dfc19a0 00000000000003d0 lsasspirpc
+ffffaf8f1df34a80 00000000000003d0 ffffaf8f1dfe6a50 00000000000003b0 ntsvcs
+ffffaf8f1dff0ce0 000000000000035c ffffaf8f1dfc19a0 00000000000003d0 lsasspirpc
+```
+
+Reg hack
+- null terminated keys hide info after
+- 

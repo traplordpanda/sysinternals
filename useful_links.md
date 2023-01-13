@@ -11,3 +11,6 @@
 - [Titanhide - Duncan x64dbg](https://github.com/mrexodia/TitanHide)
 - [rop chain](https://www.ired.team/offensive-security/code-injection-process-injection/binary-exploitation/rop-chaining-return-oriented-programming)
 - [j00ru windows-10-pagedpool-off-by-one](https://j00ru.vexillium.org/2018/07/exploiting-a-windows-10-pagedpool-off-by-one/#more-4539)
+- [running ppl for etws consumption](https://github.com/pathtofile/PPLRunner)
+- [Injecting Code into Windows Protected Processes using COM - Part 1 - Project Zero](https://googleprojectzero.blogspot.com/2018/10/injecting-code-into-windows-protected.html)
+- [creating elam driver](https://blog.tofile.dev/2020/12/16/elam.html)

@@ -14,3 +14,5 @@
 - [running ppl for etws consumption](https://github.com/pathtofile/PPLRunner)
 - [Injecting Code into Windows Protected Processes using COM - Part 1 - Project Zero](https://googleprojectzero.blogspot.com/2018/10/injecting-code-into-windows-protected.html)
 - [creating elam driver](https://blog.tofile.dev/2020/12/16/elam.html)
+- [windows-internals-blog](https://windows-internals.com/pages/internals-blog/)
+- [geoffchappell kernel](https://www.geoffchappell.com/studies/windows/km/index.htm)
